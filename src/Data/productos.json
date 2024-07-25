@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "title": "Comandante Cobra",
+    "description": "Personaje de la serie GI Joe, comandante de las fuerzas del mal.",
+    "price": 8500,
+    "thumbnail": "Path de la foto Cobra.",
+    "code": "11111",
+    "stock": 50
+  },
+  {
+    "id": 2,
+    "title": "Destro",
+    "description": "Personaje de la serie GI Joe, segundo al mando en las fuerzas del mal.",
+    "price": 6500,
+    "thumbnail": "Path de la foto Destro.",
+    "code": "11112",
+    "stock": 35
+  },
+  {
+    "id": 3,
+    "title": "Ninja Blanco",
+    "description": "Personaje de la serie Rambo.",
+    "price": 7500,
+    "thumbnail": "Path de la foto Ninja.",
+    "code": "11113",
+    "stock": 27
+  }
+]
