@@ -1,105 +1,132 @@
 import fs from "fs";
+import { title } from "process";
 
-class ProductManagger {
-   
+class ProductManager {
     static id = 0;
-    
-    constructor (path) {
-        this.arregloDeProductos = [];
-        this.path = path;
+    static arrayOfProducts = [];
+    static path;
+
+    constructor (path){
+        ProductManager.path = path;
+        fs.writeFileSync(path,JSON.stringify(ProductManager.arrayOfProducts, null, 2));
     };
 
-    async guardarEnArchivo (data){
-        await fs.promises.writeFile(this.path, JSON.stringify(data, null, 2));
+    static async saveToFile () { //agregue static para ver si funciona llamandola como metodo de la clase
+        try {
+            // console.log ("Estoy dentro de saveToFile en product-manager.js");
+            // console.log (`Lo que debería haber dentro del archivo es ${JSON.stringify(ProductManager.arrayOfProducts, null, 2)}`);
+            await fs.promises.writeFile (ProductManager.path, JSON.stringify(ProductManager.arrayOfProducts, null, 2));
+        } catch (error) {
+            console.log (`Hay un error en saveToFile de product-manager.js. El error es ${error}`);
+        }
     }
 
-    async leerDesdeArchivo (){
-        const datos = await fs.promises.readFile(this.path, "utf-8");
-        console.log ("----------Contenido del archivo sin parsear-----------")
-        console.log (datos);
-        //const respuesta = await JSON.parse(datos);
-        //return respuesta
-        return datos
-    }
-
-    async getProducts () {
-        const productos = this.leerDesdeArchivo();
-        return productos
-        //return this.arregloDeProductos;
+    static async readFromFile () {
+        try {
+            let fileContent = await fs.promises.readFile (ProductManager.path, "utf-8");
+            let answer = JSON.parse (fileContent)
+            //console.log (`Estoy dentro de readFromFile. El contenido del archivo es: ${JSON.stringify(answer, null, 2)}`);
+            return answer;
+        } catch (error) {
+            console.log (`Hay un error en readFromFile de product-manager.js. El error es ${error}`);
+        }
     };
 
-    async addProduct (title, description, price, thumbnail, code, stock) {    
-        
-        if (this.arregloDeProductos.some(elem => elem.code == code)){
-        // No se por que pero DEBO ACORDARME QUE: Si escribo la linea 27 de la siguiente manera:
-        // if (this.arregloDeProductos.some((elem)=> {elem.code == product.code})){ NO FUNCIONA!!!!
-        // el mmetodo de arreglo some me da siempre undefined
-        // No se supone que son lo mismo pero una está simplificada su escritura y nada mas???
-            console.log("El código del elemento está repetido. No se agregará al arreglo de productos.")
+    async addProduct ({title, description, code, price, status = true, category, thumbnails}) {
+
+        if (!title || !description || !code || !price || !category) {
+            console.log ("Estoy dentro de addProduct en product-manager.js y falta un campo obligatorio para poder agregar el producto.")
+            console.log (`Title: ${title}, Descritpion: ${description}, Code: ${code}, Price: ${price}, Category: ${category}`)
+            return console.log ("Producto no agregado.")
+            //return console.log ("Estoy dentro de addProduct en product-manager.js y falta un campo obligatorio para poder agregar el producto.")
+        }
+
+        let product = {
+            id : 0,
+            title,
+            description,
+            code,
+            price,
+            status,
+            category,
+            thumbnails
+        };
+
+        //console.log (`Estoy dentro de addProduct antes de agregar el producto. Deberia agregar ${JSON.stringify(product,null,2)} `)
+
+        if (!ProductManager.arrayOfProducts.some(elem => elem.code == code)){
+            ProductManager.id++;
+            product.id = ProductManager.id;
+            ProductManager.arrayOfProducts.push (product);
+            //console.log (`Estoy dentro de addProduct en product-manager.js el producto se agregó correctamente. El contenido del arreglo es ${JSON.stringify(ProductManager.arrayOfProducts, null, 2)} `)
+            await ProductManager.saveToFile (); //Esto agregue
         } else {
-            ProductManagger.id++;
-            const product = {
-                id: ProductManagger.id,
-                title: title,
-                description: description,
-                price: price,
-                thumbnail: thumbnail,
-                code: code,
-                stock: stock
+            return console.log (`Estoy dentro de addProduct en product-manager.js. El codigo esta repetido. El producto no se agrego. `)
+        }
+    };
+
+    async getProducts () { // Este metodo devuelve el array con los objetos dentro. No en fomato string.
+        let answer = await ProductManager.readFromFile ();
+        //console.log (`Esto es getProducts ${JSON.stringify(answer, null, 2)}`);
+        return (answer)
+        //return (JSON.parse(answer));
+    };
+
+    async getProductById (id) {
+        try {
+            let fileContent = await ProductManager.readFromFile ()
+            //let answer = ProductManager.arrayOfProducts.find (elem => elem.id == id);
+            let answer = fileContent.find (elem => elem.id == id);
+            if (answer){
+            //console.log (`Estoy dentro de getProductById en product-manager.js. El producto es: ${JSON.stringify(answer,null,2)}`);
+            return answer;
+            } else {
+                console.log (`Estoy dentro de getProductById en product-manager.js. No pude encontrar el producto con el ID indicado.`)        
             }
-
-            this.arregloDeProductos.push(product);
-            await this.guardarEnArchivo (this.arregloDeProductos);
-            //await fs.promises.writeFile(this.path, JSON.stringify(this.arregloDeProductos, null, 2));
+        } catch (error) {
+            console.log (`Estoy dentro de getProductById en product-manager.js. Dio un error: ${error}`)
         }
-        //return this.arregloDeProductos;
-    };
+    }
 
-    getProductById (id) {
-        const productoBuscado = this.arregloDeProductos.find(elem=>elem.id == id)
-        if (productoBuscado){
-            return productoBuscado;
+    async deleteProductById (id){
+        try {
+            let loQueHayEnArchivo = await ProductManager.readFromFile();
+            ProductManager.arrayOfProducts = loQueHayEnArchivo;
+            //let answer = ProductManager.arrayOfProducts.findIndex (elem => elem.id == id);
+            let answer = loQueHayEnArchivo.findIndex (elem => elem.id == id); 
+            // console.log (`Estoy dentro de deleteProductById en product-manager.js. El indice del elemento a borrar es: ${answer}`);
+            // console.log (`Estoy dentro de deleteProductById en product-manager.js. El arreglo queda asi: ${JSON.stringify(ProductManager.arrayOfProducts,null,2)}`)
+            //loQueHayEnArchivo = await fs.promises.readFile (ProductManager.path, "utf-8");
+            //console.log (`Estoy dentro de deleteProductById. Lo que hay en el archivo antes de guardar es: ${loQueHayEnArchivo}`);
+            //loQueHayEnArchivo.splice (answer, 1);
+            ProductManager.arrayOfProducts.splice (answer, 1);
+            await ProductManager.saveToFile ();
+            //loQueHayEnArchivo = await fs.promises.readFile (ProductManager.path, "utf-8");
+            //console.log (`Estoy dentro de deleteProductById. Lo que hay en el archivo despues de guardar es: ${loQueHayEnArchivo}`);
+            return ProductManager.arrayOfProducts;
+        } catch (error) {
+            console.log (`Estoy en el catch dentro de deleteProduct en product-manager.js. El error es el siguiente: ${error}`)
+        }
+    }
+    
+    async modifyProduct (id, dataToUpdate){ //Modificar este metodo para que no se pueda cambiar el indice o el codigo si este ultimo ya se encuentra en el arreglo
+        let indexOfProductToBeModified = ProductManager.arrayOfProducts.findIndex (elem => elem.id == id);
+        let keys = dataToUpdate.keys;
+
+        console.log (`En modifyProduct los valores a modificar son: ${JSON.stringify(keys, null, 2)}`);
+        // if (dataToUpdate.keys.every (elem => elem == "id")){
+        //     return console.log (`No se puede modificar el id del producto`)
+        // };
+
+        if (indexOfProductToBeModified == -1) {
+            return console.log ("Estoy dentro de modifyProduct en product-manager.js. Y no se encontro el producto que se quiere modificar.");
         } else {
-            console.log ("No se encontró ningún producto con la ID especificada.")
-        }
-    };
-
-    updateProduct (idProductoPorActualizar, campo, valor) {
-        productoPorActualizar = this.arregloDeProductos.find(elem => elem.id == idProductoPorActualizar)
-        productoPorActualizar.campo = valor;
-    };
-
-    deleteProduct (idProductoParaBorrar) {
-        const indiceProductoParaBorrar = this.arregloDeProductos.findIndex(elem=>elem.id == idProductoParaBorrar)
-
-        return this.arregloDeProductos.splice(indiceProductoParaBorrar,1);
+            ProductManager.arrayOfProducts [indexOfProductToBeModified] = {...ProductManager.arrayOfProducts [indexOfProductToBeModified],...dataToUpdate}; //De esta forma solo se actualizan los campos del objeto que se pasen con el mismo nombre que los campos que habia
+            console.log (`El producto ha sido modificado: ${JSON.stringify(ProductManager.arrayOfProducts[indexOfProductToBeModified], null, 2)}`);        // Tengo que encontrar una forma de validar que si un campo es nuevo o distinto no se haga el update
+            await ProductManager.saveToFile ();
+            return ProductManager.arrayOfProducts
+        }   
     }
 }
 
-const managerDeProductos = new ProductManagger ("./Data/productos.json");
-
-//console.log(managerDeProductos.getProducts());
-
-const testearGetProducts = async () => {
-    let listaDeProductos = await managerDeProductos.getProducts();
-    return console.log (listaDeProductos)
-}
-
-
-
-managerDeProductos.addProduct("Comandante Cobra", "Personaje de la serie GI Joe, comandante de las fuerzas del mal.", 8500, "Path de la foto Cobra.", "11111", 50);
-
-managerDeProductos.addProduct("Destro", "Personaje de la serie GI Joe, segundo al mando en las fuerzas del mal.", 6500, "Path de la foto Destro.", "11112", 35);
-
-managerDeProductos.addProduct("Destro", "Personaje de la serie GI Joe, segundo al mando en las fuerzas del mal.", 6500, "Path de la foto Destro.", "11112", 35);
-
-managerDeProductos.addProduct("Ninja Blanco", "Personaje de la serie Rambo.", 7500, "Path de la foto Ninja.", "11113", 27);
-
-testearGetProducts ();
-
-// console.log(managerDeProductos.getProductById(3));
-
-// managerDeProductos.deleteProduct(2);
-
-// console.log(managerDeProductos.getProducts());
-
+export default ProductManager;

@@ -1,10 +1,10 @@
 {
-  "name": "primer-preentrega",
+  "name": "productmanagement",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "./src/app.js"
+    "dev": "./src/product-manager.js"
   },
   "keywords": [],
   "author": "",
@@ -12,5 +12,8 @@
   "description": "",
   "devDependencies": {
     "nodemon": "^3.1.4"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
   }
 }
